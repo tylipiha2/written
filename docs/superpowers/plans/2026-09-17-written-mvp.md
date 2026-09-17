@@ -322,6 +322,18 @@ create table public.projects (
   created_at timestamptz not null default now()
 );
 
+-- project_members: join table between profiles and projects
+-- (created before is_project_member(), which is a `language sql`
+-- function — Postgres validates its body against the catalog at
+-- CREATE FUNCTION time, so the table it queries must exist first)
+create table public.project_members (
+  project_id uuid not null references public.projects(id) on delete cascade,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  role text not null check (role in ('owner', 'member')),
+  added_at timestamptz not null default now(),
+  primary key (project_id, user_id)
+);
+
 alter table public.projects enable row level security;
 
 -- helper function: is the current user a member of this project?
@@ -349,15 +361,6 @@ create policy "authenticated users can create projects"
   on public.projects for insert
   to authenticated
   with check (owner_id = auth.uid());
-
--- project_members: join table between profiles and projects
-create table public.project_members (
-  project_id uuid not null references public.projects(id) on delete cascade,
-  user_id uuid not null references public.profiles(id) on delete cascade,
-  role text not null check (role in ('owner', 'member')),
-  added_at timestamptz not null default now(),
-  primary key (project_id, user_id)
-);
 
 alter table public.project_members enable row level security;
 
