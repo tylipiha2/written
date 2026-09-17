@@ -1,4 +1,5 @@
 import ReactMarkdown from 'react-markdown'
+import NoteTimestamp from '@/components/NoteTimestamp'
 import type { Note } from '@/lib/types'
 
 export default function NoteFeed({ notes }: { notes: Note[] }) {
@@ -14,7 +15,7 @@ export default function NoteFeed({ notes }: { notes: Note[] }) {
             <ReactMarkdown>{note.content}</ReactMarkdown>
           </div>
           <p className="mt-2 text-xs text-gray-400">
-            {new Date(note.created_at).toLocaleString()}
+            <NoteTimestamp createdAt={note.created_at} />
           </p>
         </li>
       ))}
