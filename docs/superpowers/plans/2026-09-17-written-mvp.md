@@ -355,7 +355,11 @@ $$;
 create policy "members can view their projects"
   on public.projects for select
   to authenticated
-  using (public.is_project_member(id));
+  -- owner_id = auth.uid() covers the moment a project is created: the
+  -- owner has no project_members row yet, so is_project_member() alone
+  -- would hide the row from them and deadlock the owner-add-self insert
+  -- policy on project_members below.
+  using (owner_id = auth.uid() or public.is_project_member(id));
 
 create policy "authenticated users can create projects"
   on public.projects for insert
@@ -403,7 +407,12 @@ create policy "members can add notes to their projects"
 create policy "authors can update their own notes"
   on public.notes for update
   to authenticated
-  using (author_id = auth.uid());
+  -- with check re-validates the same condition against the *post*-update
+  -- row (using alone would apply to the pre-update row only, letting an
+  -- author reassign project_id to a project they aren't a member of and
+  -- inject the note into that project's feed).
+  using (author_id = auth.uid() and public.is_project_member(project_id))
+  with check (author_id = auth.uid() and public.is_project_member(project_id));
 
 create policy "authors can delete their own notes"
   on public.notes for delete
