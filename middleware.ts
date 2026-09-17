@@ -2,6 +2,26 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
 export async function middleware(request: NextRequest) {
+  // TEMPORARY diagnostic wrapper — remove once the MIDDLEWARE_INVOCATION_FAILED
+  // cause is confirmed. Surfaces the real error in the response body instead
+  // of Vercel's opaque generic 500 page.
+  try {
+    return await handle(request)
+  } catch (err) {
+    return NextResponse.json(
+      {
+        diagnosticError: true,
+        message: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+        hasUrl: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
+        hasKey: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+      },
+      { status: 500 }
+    )
+  }
+}
+
+async function handle(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
