@@ -32,15 +32,6 @@ export default function NewProjectForm() {
       return
     }
 
-    const { error: memberError } = await supabase
-      .from('project_members')
-      .insert({ project_id: project.id, user_id: userId, role: 'owner' })
-
-    if (memberError) {
-      setError(memberError.message)
-      return
-    }
-
     setName('')
     router.refresh()
   }

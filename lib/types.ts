@@ -21,7 +21,7 @@ export type ProjectMember = {
 export type Note = {
   id: string
   project_id: string
-  author_id: string
+  author_id: string | null
   content: string
   created_at: string
 }

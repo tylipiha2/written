@@ -8,7 +8,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const { id } = await params
   const supabase = await createClient()
 
-  const { data: project } = await supabase
+  const { data: project, error: projectError } = await supabase
     .from('projects')
     .select('*')
     .eq('id', id)
@@ -25,6 +25,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
     .select('user_id, profiles(id, email, display_name)')
     .eq('project_id', id)
 
+  if (projectError) {
+    return (
+      <main className="p-8">
+        <p className="text-red-600">Something went wrong loading this project. Try refreshing.</p>
+      </main>
+    )
+  }
+
   if (!project) {
     return (
       <main className="p-8">
@@ -33,6 +41,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
     )
   }
 
+  const { data: userData } = await supabase.auth.getUser()
+
   const members = (memberRows ?? [])
     .map((row) => row.profiles as unknown as Profile)
     .filter(Boolean)
@@ -40,7 +50,11 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   return (
     <main className="mx-auto max-w-2xl space-y-6 p-8">
       <h1 className="text-2xl font-semibold">{project.name}</h1>
-      <ShareProjectPanel projectId={project.id} members={members} />
+      <ShareProjectPanel
+        projectId={project.id}
+        members={members}
+        isOwner={project.owner_id === userData.user?.id}
+      />
       <NoteComposer projectId={project.id} />
       <NoteFeed notes={(notes as Note[] | null) ?? []} />
     </main>

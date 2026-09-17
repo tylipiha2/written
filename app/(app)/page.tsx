@@ -5,7 +5,7 @@ import type { Project } from '@/lib/types'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
-  const { data: projects } = await supabase
+  const { data: projects, error: projectsError } = await supabase
     .from('projects')
     .select('*')
     .order('created_at', { ascending: false })
@@ -13,17 +13,23 @@ export default async function DashboardPage() {
   return (
     <main className="mx-auto max-w-2xl space-y-6 p-8">
       <NewProjectForm />
-      <ul className="space-y-2">
-        {(projects as Project[] | null)?.map((project) => (
-          <li key={project.id}>
-            <Link href={`/projects/${project.id}`} className="text-blue-600 underline">
-              {project.name}
-            </Link>
-          </li>
-        ))}
-      </ul>
-      {projects?.length === 0 && (
-        <p className="text-gray-600">No projects yet — create one above.</p>
+      {projectsError ? (
+        <p className="text-red-600">Something went wrong loading your projects. Try refreshing.</p>
+      ) : (
+        <>
+          <ul className="space-y-2">
+            {(projects as Project[] | null)?.map((project) => (
+              <li key={project.id}>
+                <Link href={`/projects/${project.id}`} className="text-blue-600 underline">
+                  {project.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          {projects?.length === 0 && (
+            <p className="text-gray-600">No projects yet — create one above.</p>
+          )}
+        </>
       )}
     </main>
   )
