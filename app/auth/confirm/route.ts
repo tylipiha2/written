@@ -6,7 +6,11 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const token_hash = searchParams.get('token_hash')
   const type = searchParams.get('type') as EmailOtpType | null
-  const next = searchParams.get('next') ?? '/'
+  const requestedNext = searchParams.get('next') ?? '/'
+  // Only allow same-site, relative redirects. A bare "next" straight from
+  // the query string would let an absolute URL (e.g. //evil.example.com or
+  // https://evil.example.com) redirect a verified user off-site.
+  const next = requestedNext.startsWith('/') && !requestedNext.startsWith('//') ? requestedNext : '/'
 
   if (token_hash && type) {
     const supabase = await createClient()
